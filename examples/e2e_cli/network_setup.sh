@@ -2,6 +2,7 @@
 
 UP_DOWN=$1
 CH_NAME=$2
+CC_NAME=$3
 
 COMPOSE_FILE=docker-compose.yaml
 
@@ -18,6 +19,10 @@ function validateArgs () {
 	if [ -z "${CH_NAME}" ]; then
 		echo "setting to default channel 'mychannel'"
 		CH_NAME=mychannel
+	fi
+	if [ -z "${CC_NAME}" ]; then
+		echo "setting to default chaincode 'mycc'"
+		CC_NAME=mycc
 	fi
 }
 
@@ -44,7 +49,7 @@ function networkUp () {
         source generateCfgTrx.sh $CH_NAME
 	cd $CURRENT_DIR
 
-	CHANNEL_NAME=$CH_NAME docker-compose -f $COMPOSE_FILE up -d 2>&1
+	CHANNEL_NAME=$CH_NAME CHAINCODE_NAME=$CC_NAME docker-compose -f $COMPOSE_FILE up -d 2>&1
 	if [ $? -ne 0 ]; then
 		echo "ERROR !!!! Unable to pull the images "
 		exit 1
@@ -53,7 +58,7 @@ function networkUp () {
 }
 
 function networkDown () {
-        docker-compose -f $COMPOSE_FILE down
+    CHAINCODE_NAME    docker-compose -f $COMPOSE_FILE down
         #Cleanup the chaincode containers
 	clearContainers
 	#Cleanup images

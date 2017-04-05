@@ -6,8 +6,11 @@ CHANNEL_NAME="$1"
 COUNTER=0
 MAX_RETRY=5
 ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/orderer/localMspConfig/cacerts/ordererOrg0.pem
+CHAINCODE_NAME="$2"
+: ${CHAINCODE_NAME:="mycc"}
 
 echo "Channel name : "$CHANNEL_NAME
+echo "Chaincode name : "$CHAINCODE_NAME
 
 verifyResult () {
 	if [ $1 -ne 0 ] ; then
@@ -78,7 +81,10 @@ joinChannel () {
 installChaincode () {
 	PEER=$1
 	setGlobals $PEER
-	peer chaincode install -n mycc -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/chaincode_example02 >&log.txt
+	# peer chaincode install -n $CHAINCODE_NAME -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/chaincode_example02 >&log.txt
+  peer chaincode install -n $CHAINCODE_NAME -l java -v 1.0 -p /opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/java/SimpleSample -C $CHANNEL_NAME
+  # peer chaincode install -n $CHAINCODE_NAME -l java -v 1.0 -p /opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/java/Example -C $CHANNEL_NAME
+  # peer chaincode install -n $CHAINCODE_NAME -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/chaincode_example01 -C $CHANNEL_NAME
 	res=$?
 	cat log.txt
         verifyResult $res "Chaincode installation on remote peer PEER$PEER has Failed"
@@ -90,9 +96,11 @@ instantiateChaincode () {
 	PEER=$1
 	setGlobals $PEER
         if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-		peer chaincode instantiate -o orderer0:7050 -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org0MSP.member','Org1MSP.member')" >&log.txt
+		peer chaincode instantiate -o orderer0:7050 -l java -C $CHANNEL_NAME -n $CHAINCODE_NAME -v 1.0 -c '{"Function": "init","Args":["a","100","b","200"]}' -P "OR	('Org0MSP.member','Org1MSP.member')" >&log.txt
+		# peer chaincode instantiate -o orderer0:7050 -l java -C $CHANNEL_NAME -n $CHAINCODE_NAME -v 1.0 -c '{"Function":"init","Args":[]}' -P "OR	('Org0MSP.member','Org1MSP.member')" >&log.txt
 	else
-		peer chaincode instantiate -o orderer0:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org0MSP.member','Org1MSP.member')" >&log.txt
+		peer chaincode instantiate -o orderer0:7050 -l java --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CHAINCODE_NAME -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org0MSP.member','Org1MSP.member')" >&log.txt
+		# peer chaincode instantiate -o orderer0:7050 -l java --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CHAINCODE_NAME -v 1.0 -c '{"Function":"init","Args":[]}' -P "OR	('Org0MSP.member','Org1MSP.member')" >&log.txt
 	fi
 	res=$?
 	cat log.txt
@@ -114,7 +122,8 @@ chaincodeQuery () {
   do
      sleep 3
      echo "Attempting to Query PEER$PEER ...$(($(date +%s)-starttime)) secs"
-     peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}' >&log.txt
+     peer chaincode query -l java -C $CHANNEL_NAME -n $CHAINCODE_NAME -c '{"Args":["query","a"]}' >&log.txt
+     # peer chaincode query -l java -C $CHANNEL_NAME -n $CHAINCODE_NAME -c '{"Function":"put","Args":["hey"]}' >&log.txt
      test $? -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}')
      test "$VALUE" = "$2" && let rc=0
   done
@@ -132,9 +141,11 @@ chaincodeQuery () {
 chaincodeInvoke () {
         PEER=$1
         if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-		peer chaincode invoke -o orderer0:7050 -C $CHANNEL_NAME -n mycc -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+		peer chaincode invoke -o orderer0:7050 -l java -C $CHANNEL_NAME -n $CHAINCODE_NAME -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+		# peer chaincode invoke -o orderer0:7050 -l java -C $CHANNEL_NAME -n $CHAINCODE_NAME -c '{"Function":"hello","Args":[""]}' >&log.txt
 	else
-		peer chaincode invoke -o orderer0:7050  --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+		peer chaincode invoke -o orderer0:7050 -l java --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CHAINCODE_NAME -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+		# peer chaincode invoke -o orderer0:7050 -l java --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CHAINCODE_NAME -c '{"Function":"hello","Args":[""]}' >&log.txt
 	fi
 	res=$?
 	cat log.txt
