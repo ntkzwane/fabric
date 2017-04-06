@@ -82,8 +82,9 @@ installChaincode () {
 	PEER=$1
 	setGlobals $PEER
 	# peer chaincode install -n $CHAINCODE_NAME -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/chaincode_example02 >&log.txt
-  peer chaincode install -n $CHAINCODE_NAME -l java -v 1.0 -p /opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/java/SimpleSample -C $CHANNEL_NAME
+  # peer chaincode install -n $CHAINCODE_NAME -l java -v 1.0 -p /opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/java/SimpleSample -C $CHANNEL_NAME
   # peer chaincode install -n $CHAINCODE_NAME -l java -v 1.0 -p /opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/java/Example -C $CHANNEL_NAME
+  peer chaincode install -n $CHAINCODE_NAME -l java -v 1.0 -p /opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/java/Marbles -C $CHANNEL_NAME
   # peer chaincode install -n $CHAINCODE_NAME -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/chaincode_example01 -C $CHANNEL_NAME
 	res=$?
 	cat log.txt
